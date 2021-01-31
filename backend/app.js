@@ -1,43 +1,53 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const Post = require('./models/post');
+
 const app = express();
+mongoose.connect("mongodb+srv://max:s8nudjhxpXn8rC3a@cluster0.juhkj.mongodb.net/node-angular?retryWrites=true&w=majority", { useUnifiedTopology: true })
+.then(() =>{
+  console.log('Connected to Mongo DataBase!')
+})
+.catch(() =>{
+  console.log('Connected to failed!')
+});
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended : false}));
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  // res.setHeader("Access-Control-Allow-Credentials", "true");
-  // res.setHeader("Access-Control-Max-Age", "1800");
-  // res.setHeader("Access-Control-Allow-Headers", "content-type, X-Auth-Token,");
-  // res.setHeader( "Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, PATCH, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   res.setHeader("Access-Control-Allow-Methods", "PUT, POST, GET, DELETE, PATCH, OPTIONS");
   next();
 });
 
 app.post("/api/posts", (req, res, next) => {
-  const post = req.body;
-  console.log(post);
+  const post = new Post({
+    title: req.body.title,
+    content: req.body.content
+  });
+  // save method provided by mongoose package
+  post.save();
   res.status(201).json({
     message: 'Post added successfully!'
   });
 });
 
 app.get('/api/posts', (req, res, next) => {
-  const posts = [
-    { id: 'fadf124211',
-      title: 'First Server-Side Post',
-      content: 'This is coming from the server'
-    },
-    { id: 'ksajflaj132',
-      title: 'Second Server-Side Post',
-      content: 'This is coming from the server!'
-    },
-  ];
-  res.status(200).json({
-    message: 'Post fetched successfully',
-    posts: posts
+  Post.find()
+      .then(documents =>{
+        res.status(200).json({
+          message: 'Post fetched successfully',
+          posts: documents
+        });
+  });
+});
+
+app.delete("/api/posts/:id", (req, res, next) => {
+  Post.deleteOne({_id: req.params.id}).then(result => {
+    console.log(result);
+    res.status(200).json({ message: "Post Deleted!" });
   });
 });
 
